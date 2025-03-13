@@ -17,14 +17,35 @@ app.get("/", (req: Request, res: Response) => {
   const hours = Math.floor(uptimeInSeconds / 3600);
   const minutes = Math.floor((uptimeInSeconds % 3600) / 60);
   const seconds = Math.floor(uptimeInSeconds % 60);
+  const routes: string[] = [];
+
+  const getRoutesFromStack = (stack: any) => {
+    stack.forEach((middleware: any) => {
+      if (middleware.route) {
+        routes.push(`${Object.keys(middleware.route.methods).join(", ").toUpperCase()} ${middleware.route.path}`);
+      } else if (middleware.handle && middleware.handle.stack) {
+        getRoutesFromStack(middleware.handle.stack);
+      }
+    });
+  };
+  getRoutesFromStack(app._router.stack);
 
   res.json({
     status: "API-AFINACAICARA",
     uptime: `${hours}h ${minutes}m ${seconds}s`,
     timestamp: new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
     developed: "Josue Henrique",
-    portfolio: "https://josuashenrique.site/"
+    portfolio: "https://josuashenrique.site/",
+    rotas: routes
   });
+});
+
+app.use(apiRoutes);
+// app.use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerDocument));
+
+app.use((req: Request, res: Response) => {
+  res.status(404);
+  res.json({ error: "Endpoint não encontrado." });
 });
 
 app.use(apiRoutes);
